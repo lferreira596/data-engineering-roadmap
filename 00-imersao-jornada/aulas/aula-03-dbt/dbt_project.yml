@@ -43,7 +43,7 @@ models:
       sales:
         +schema: gold_sales
       customer_success:
-        +schema: gold_customer_success
+        +schema: gold_cs
       pricing:
         +schema: gold_pricing
 

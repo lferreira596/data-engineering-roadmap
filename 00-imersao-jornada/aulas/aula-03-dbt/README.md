@@ -26,12 +26,13 @@ aula-03-dbt/
 │   │   └── silver_preco_competidores.sql
 │   └── gold/                    # 3 tables - 1 por Data Mart
 │       ├── sales/
-│       │   └── gold_sales_vendas_temporais.sql
+│       │   └── vendas_temporais.sql
 │       ├── customer_success/
-│       │   └── gold_customer_success_clientes_segmentacao.sql
+│       │   └── clientes_segmentacao.sql
 │       └── pricing/
-│           └── gold_pricing_precos_competitividade.sql
+│           └── precos_competitividade.sql
 ├── macros/
+│   └── generate_schema_name.sql  # Macro para schemas limpos (sem prefixo public_)
 └── tests/
 ```
 
@@ -64,7 +65,7 @@ flowchart LR
 
     subgraph GOLD["GOLD (tables)"]
         gold_sales["gold_sales<br/>vendas_temporais"]
-        gold_cs["gold_customer_success<br/>clientes_segmentacao"]
+        gold_cs["gold_cs<br/>clientes_segmentacao"]
         gold_pricing["gold_pricing<br/>precos_competitividade"]
     end
 
@@ -199,14 +200,14 @@ models:
   ecommerce:                          # Deve bater com o name do projeto
     bronze:
       +materialized: view             # Views - sempre atualizadas, sem custo de storage
-      +schema: bronze                 # Schema: public_bronze
+      +schema: bronze                 # Schema: bronze
       +tags: ["bronze", "raw"]
       +meta:
         modeling_layer: bronze
 
     silver:
       +materialized: table            # Tables - colunas calculadas persistidas
-      +schema: silver                 # Schema: public_silver
+      +schema: silver                 # Schema: silver
       +tags: ["silver", "cleaned"]
       +meta:
         modeling_layer: silver
@@ -217,11 +218,11 @@ models:
       +meta:
         modeling_layer: gold
       sales:
-        +schema: gold_sales           # Schema: public_gold_sales
+        +schema: gold_sales           # Schema: gold_sales
       customer_success:
-        +schema: gold_customer_success # Schema: public_gold_customer_success
+        +schema: gold_cs # Schema: gold_cs
       pricing:
-        +schema: gold_pricing         # Schema: public_gold_pricing
+        +schema: gold_pricing         # Schema: gold_pricing
 
 # Variaveis do projeto
 vars:
@@ -341,9 +342,9 @@ dbt run --select tag:gold
 
 ```bash
 # O + executa o modelo e todos os que ele depende
-dbt run --select +gold_sales_vendas_temporais
-dbt run --select +gold_customer_success_clientes_segmentacao
-dbt run --select +gold_pricing_precos_competitividade
+dbt run --select +vendas_temporais
+dbt run --select +clientes_segmentacao
+dbt run --select +precos_competitividade
 ```
 
 ### 12. Verificar os dados no banco
@@ -352,11 +353,11 @@ Apos o `dbt run`, os schemas criados no PostgreSQL sao:
 
 | Schema | Tabelas |
 | ------ | ------- |
-| `public_bronze` | bronze_vendas, bronze_clientes, bronze_produtos, bronze_preco_competidores |
-| `public_silver` | silver_vendas, silver_clientes, silver_produtos, silver_preco_competidores |
-| `public_gold_sales` | gold_sales_vendas_temporais |
-| `public_gold_customer_success` | gold_customer_success_clientes_segmentacao |
-| `public_gold_pricing` | gold_pricing_precos_competitividade |
+| `bronze` | bronze_vendas, bronze_clientes, bronze_produtos, bronze_preco_competidores |
+| `silver` | silver_vendas, silver_clientes, silver_produtos, silver_preco_competidores |
+| `gold_sales` | vendas_temporais |
+| `gold_cs` | clientes_segmentacao |
+| `gold_pricing` | precos_competitividade |
 
 ### 13. Gerar documentacao
 
@@ -388,7 +389,7 @@ models:
       sales:
         +schema: gold_sales
       customer_success:
-        +schema: gold_customer_success
+        +schema: gold_cs
       pricing:
         +schema: gold_pricing
 
@@ -520,7 +521,7 @@ Mesmas colunas do bronze + **novas colunas calculadas**. Materializado como **ta
 
 JOINs entre tabelas silver + agregacoes. Materializado como **table**. Dados prontos para dashboards.
 
-#### gold_sales_vendas_temporais
+#### vendas_temporais
 
 **Pergunta:** Qual foi minha receita por data?
 
@@ -542,7 +543,7 @@ Metricas de venda agregadas por data/hora. Fonte: `silver_vendas`
 
 ---
 
-#### gold_customer_success_clientes_segmentacao
+#### clientes_segmentacao
 
 **Pergunta:** Quais sao meus melhores clientes?
 
@@ -563,7 +564,7 @@ Segmentacao de clientes por receita. JOIN: `silver_vendas` + `silver_clientes`
 
 ---
 
-#### gold_pricing_precos_competitividade
+#### precos_competitividade
 
 **Pergunta:** Como estamos em relacao a concorrencia?
 

@@ -187,7 +187,7 @@ vars:
 
 ### Data Mart: Sales
 
-#### gold_sales_vendas_temporais.sql
+#### vendas_temporais.sql
 
 **Pergunta de negocio:** Qual foi minha receita por data?
 
@@ -217,7 +217,7 @@ vars:
 
 ### Data Mart: Customer Success
 
-#### gold_customer_success_clientes_segmentacao.sql
+#### clientes_segmentacao.sql
 
 **Pergunta de negocio:** Quais sao meus melhores clientes?
 
@@ -264,7 +264,7 @@ vars:
 
 ### Data Mart: Pricing
 
-#### gold_pricing_precos_competitividade.sql
+#### precos_competitividade.sql
 
 **Pergunta de negocio:** Como estamos em relacao a concorrencia?
 
