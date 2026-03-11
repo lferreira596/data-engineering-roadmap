@@ -90,7 +90,23 @@ flowchart LR
 
 ## Passo a Passo
 
-### 1. Instalar dependencias
+### 1. Criar ambiente virtual e instalar dependencias
+
+```bash
+python -m venv .venv
+```
+
+Ativar o ambiente:
+
+```bash
+# Mac / Linux
+source .venv/bin/activate
+
+# Windows
+.venv\Scripts\activate
+```
+
+Instalar o dbt:
 
 ```bash
 pip install dbt-core dbt-postgres
