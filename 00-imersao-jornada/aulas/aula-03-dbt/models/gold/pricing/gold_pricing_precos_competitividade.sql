@@ -1,17 +1,9 @@
-{{
-    config(
-        materialized='table',
-        schema='gold',
-        tags=['gold', 'kpi', 'precos', 'competitividade']
-    )
-}}
-
 -- ============================================
 -- CAMADA GOLD: KPI - Competitividade de Preços
 -- ============================================
 -- Conceito: Terceira camada da arquitetura Medalhão
 -- Objetivo: Analisar competitividade de preços vs concorrentes
--- 
+--
 -- Este KPI responde:
 -- - Quais produtos estão mais caros que a concorrência?
 -- - Quais produtos estão mais baratos?
@@ -31,16 +23,15 @@ WITH precos_por_produto AS (
     FROM {{ ref('silver_produtos') }} p
     LEFT JOIN {{ ref('silver_preco_competidores') }} pc
         ON p.id_produto = pc.id_produto
-    WHERE pc.flag_preco_invalido = FALSE
     GROUP BY 1, 2, 3, 4, 5
 ),
 
 vendas_por_produto AS (
     SELECT
-        id_produto,
-        SUM(receita_total) AS receita_total,
-        SUM(quantidade) AS quantidade_total
-    FROM {{ ref('silver_vendas_enriquecidas') }}
+        v.id_produto,
+        SUM(v.receita_total) AS receita_total,
+        SUM(v.quantidade) AS quantidade_total
+    FROM {{ ref('silver_vendas') }} v
     GROUP BY 1
 )
 
@@ -55,18 +46,18 @@ SELECT
     pp.preco_maximo_concorrentes,
     pp.total_concorrentes,
     -- Diferença percentual
-    CASE 
+    CASE
         WHEN pp.preco_medio_concorrentes > 0 THEN
             ((pp.nosso_preco - pp.preco_medio_concorrentes) / pp.preco_medio_concorrentes) * 100
         ELSE NULL
     END AS diferenca_percentual_vs_media,
-    CASE 
+    CASE
         WHEN pp.preco_minimo_concorrentes > 0 THEN
             ((pp.nosso_preco - pp.preco_minimo_concorrentes) / pp.preco_minimo_concorrentes) * 100
         ELSE NULL
     END AS diferenca_percentual_vs_minimo,
     -- Classificação
-    CASE 
+    CASE
         WHEN pp.nosso_preco > pp.preco_maximo_concorrentes THEN 'MAIS_CARO_QUE_TODOS'
         WHEN pp.nosso_preco < pp.preco_minimo_concorrentes THEN 'MAIS_BARATO_QUE_TODOS'
         WHEN pp.nosso_preco > pp.preco_medio_concorrentes THEN 'ACIMA_DA_MEDIA'
@@ -81,4 +72,3 @@ LEFT JOIN vendas_por_produto vp
     ON pp.id_produto = vp.id_produto
 WHERE pp.preco_medio_concorrentes IS NOT NULL
 ORDER BY diferenca_percentual_vs_media DESC
-

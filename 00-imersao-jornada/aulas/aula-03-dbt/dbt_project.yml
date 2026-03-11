@@ -48,6 +48,4 @@ vars:
   # Configurações de negócio
   segmentacao_vip_threshold: 10000  # Receita mínima para cliente VIP
   segmentacao_top_tier_threshold: 5000  # Receita mínima para TOP_TIER
-  top_n_produtos: 10  # Quantidade de produtos no top N
-  top_n_clientes: 10  # Quantidade de clientes no top N
 
