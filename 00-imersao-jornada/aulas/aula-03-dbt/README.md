@@ -39,32 +39,52 @@ aula-03-dbt/
 
 ## Fluxo de Dados
 
+```mermaid
+flowchart LR
+    subgraph RAW["RAW (public)"]
+        raw_vendas[raw.vendas]
+        raw_clientes[raw.clientes]
+        raw_produtos[raw.produtos]
+        raw_preco[raw.preco_competidores]
+    end
+
+    subgraph BRONZE["BRONZE (views)"]
+        bronze_vendas[bronze_vendas]
+        bronze_clientes[bronze_clientes]
+        bronze_produtos[bronze_produtos]
+        bronze_preco[bronze_preco_competidores]
+    end
+
+    subgraph SILVER["SILVER (tables)"]
+        silver_vendas["silver_vendas<br/><i>+ receita_total</i><br/><i>+ dimensoes temporais</i><br/><i>+ preco_venda</i>"]
+        silver_clientes[silver_clientes]
+        silver_produtos["silver_produtos<br/><i>+ faixa_preco</i>"]
+        silver_preco["silver_preco_competidores<br/><i>+ data_coleta_date</i>"]
+    end
+
+    subgraph GOLD["GOLD (tables)"]
+        gold_sales["gold_sales<br/>vendas_temporais"]
+        gold_cs["gold_customer_success<br/>clientes_segmentacao"]
+        gold_pricing["gold_pricing<br/>precos_competitividade"]
+    end
+
+    raw_vendas --> bronze_vendas --> silver_vendas
+    raw_clientes --> bronze_clientes --> silver_clientes
+    raw_produtos --> bronze_produtos --> silver_produtos
+    raw_preco --> bronze_preco --> silver_preco
+
+    silver_vendas --> gold_sales
+    silver_vendas --> gold_cs
+    silver_clientes --> gold_cs
+    silver_vendas --> gold_pricing
+    silver_produtos --> gold_pricing
+    silver_preco --> gold_pricing
+
+    style RAW fill:#E8F4F8,stroke:#4A90E2
+    style BRONZE fill:#F5E6D3,stroke:#D4A574
+    style SILVER fill:#E8E8E8,stroke:#A0A0A0
+    style GOLD fill:#FFF3CD,stroke:#FFA500
 ```
-RAW (public)                BRONZE (views)                SILVER (tables)                  GOLD (tables)
-────────────                ──────────────                ───────────────                  ──────────────
-
-raw.vendas ──────────────► bronze_vendas ──────────────► silver_vendas ──────────────────► gold_sales_vendas_temporais
-                                                         (+ receita_total,           │
-                                                          dimensoes temporais,        ├──► gold_customer_success_clientes_segmentacao
-                                                          preco_venda)                │
-                                                                                      └──► gold_pricing_precos_competitividade
-                                                                                                ▲
-raw.clientes ────────────► bronze_clientes ────────────► silver_clientes ────────────────────────┤
-                                                                                                │
-raw.produtos ────────────► bronze_produtos ────────────► silver_produtos ────────────────────────┤
-                                                         (+ faixa_preco)                        │
-                                                                                                │
-raw.preco_competidores ──► bronze_preco_competidores ──► silver_preco_competidores ─────────────┘
-                                                         (+ data_coleta_date)
-```
-
-### Dependencias dos Gold Models
-
-| Gold Model | Silver Models usados |
-|-----------|---------------------|
-| `gold_sales_vendas_temporais` | `silver_vendas` |
-| `gold_customer_success_clientes_segmentacao` | `silver_vendas` + `silver_clientes` |
-| `gold_pricing_precos_competitividade` | `silver_produtos` + `silver_preco_competidores` + `silver_vendas` |
 
 ---
 
