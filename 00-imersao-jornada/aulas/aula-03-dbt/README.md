@@ -142,11 +142,27 @@ O `dbt init` cria a seguinte estrutura de pastas:
 Vamos remover as pastas que nao usaremos e o modelo de exemplo:
 
 ```bash
-rm -rf analyses snapshots seeds macros tests
+rm -rf analyses snapshots seeds tests
 rm -rf models/example
 ```
 
-### 5. Criar a arquitetura Medalhao
+### 5. Criar a macro de schema
+
+Por padrao, o dbt concatena o schema do `profiles.yml` com o `+schema` do modelo, gerando nomes como `public_bronze`. Para ter schemas limpos (`bronze`, `silver`, `gold_sales`), criar o arquivo `macros/generate_schema_name.sql`:
+
+```sql
+{% macro generate_schema_name(custom_schema_name, node) -%}
+    {%- if custom_schema_name is none -%}
+        {{ target.schema }}
+    {%- else -%}
+        {{ custom_schema_name | trim }}
+    {%- endif -%}
+{%- endmacro %}
+```
+
+Essa macro diz ao dbt: se o modelo tem um `+schema` definido, use **somente** esse nome, sem concatenar com o schema default.
+
+### 6. Criar a arquitetura Medalhao
 
 Vamos organizar os modelos em 3 camadas: Bronze -> Silver -> Gold.
 
@@ -171,7 +187,7 @@ models/
     └── pricing/
 ```
 
-### 6. Configurar o dbt_project.yml
+### 7. Configurar o dbt_project.yml
 
 Editar o `dbt_project.yml` para definir a materializacao e schema de cada camada. Esse arquivo e o coracao do projeto dbt — ele controla como cada modelo e materializado no banco.
 
@@ -232,7 +248,7 @@ vars:
 
 **Por que configurar aqui e nao dentro de cada `.sql`?** Centralizar no `dbt_project.yml` evita repetir `{{ config() }}` em cada modelo. Todos os modelos dentro da pasta `bronze/` herdam automaticamente `materialized: view` e `schema: bronze`.
 
-### 7. Criar o _sources.yml
+### 8. Criar o _sources.yml
 
 O `_sources.yml` diz ao dbt onde estao as tabelas originais no banco. Sem ele, o dbt nao sabe que as tabelas `vendas`, `clientes`, etc. existem.
 
@@ -309,7 +325,7 @@ sources:
 
 **Por que usar sources?** Em vez de escrever `SELECT * FROM public.vendas` direto no SQL, usamos `{{ source('raw', 'vendas') }}`. Isso permite ao dbt rastrear a linhagem dos dados (lineage) e saber de onde cada modelo vem.
 
-### 8. Testar a conexao
+### 9. Testar a conexao
 
 ```bash
 dbt debug
@@ -317,7 +333,7 @@ dbt debug
 
 Valida se o dbt consegue se conectar ao banco. Voce deve ver `All checks passed!` no final.
 
-### 9. Executar todos os modelos
+### 10. Executar todos os modelos
 
 ```bash
 dbt run
@@ -325,7 +341,7 @@ dbt run
 
 O dbt resolve as dependencias e executa na ordem correta: Bronze (4 views) -> Silver (4 tables) -> Gold (3 tables).
 
-### 10. Executar por camada (opcional)
+### 11. Executar por camada (opcional)
 
 ```bash
 # Somente bronze (4 views)
@@ -338,7 +354,7 @@ dbt run --select tag:silver
 dbt run --select tag:gold
 ```
 
-### 11. Executar modelo especifico com dependencias
+### 12. Executar modelo especifico com dependencias
 
 ```bash
 # O + executa o modelo e todos os que ele depende
@@ -347,7 +363,7 @@ dbt run --select +clientes_segmentacao
 dbt run --select +precos_competitividade
 ```
 
-### 12. Verificar os dados no banco
+### 13. Verificar os dados no banco
 
 Apos o `dbt run`, os schemas criados no PostgreSQL sao:
 
@@ -359,7 +375,7 @@ Apos o `dbt run`, os schemas criados no PostgreSQL sao:
 | `gold_cs` | clientes_segmentacao |
 | `gold_pricing` | precos_competitividade |
 
-### 13. Gerar documentacao
+### 14. Gerar documentacao
 
 ```bash
 # Gerar catalogo de dados
