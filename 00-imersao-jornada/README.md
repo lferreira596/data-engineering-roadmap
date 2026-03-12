@@ -75,16 +75,16 @@ Download dos arquivos das aulas: [Drive](https://drive.google.com/drive/folders/
 
 ---
 
-### 🤖 Dia 4: Inteligência Artificial
-**Objetivo:** Dados tomando decisões
+### 🤖 Dia 4: Claude Code & Python
+**Objetivo:** Levar os dados até quem toma decisão
 
-- IA interpretando dados
-- Comparação automática de preços
-- Alertas inteligentes
+- Dashboard Streamlit para 3 diretores (Comercial, CS, Pricing)
+- Agente de IA que gera relatórios diários às 8h da manhã
+- Claude Code como ferramenta de desenvolvimento assistido
 
-**Exemplo:** "Esse produto está mais caro que o mercado."
+**Frase-chave:** Pipeline sem consumo não gera valor.
 
-**Material:** [Aula 4 - Inteligência Artificial](./aulas/aula-04-ia/) *(em breve)*
+**Material:** [Aula 4 - Claude Code & Python](./aulas/aula-04-claude-code/)
 
 ---
 
@@ -365,7 +365,7 @@ Projeto-Jornada-De-Dados/
 │   │   └── ESTRUTURA_DADOS.md    # Documentação dos datasets
 │   ├── aula-02-python/           # Dia 2: Python & Ingestão (em breve)
 │   ├── aula-03-engenharia/       # Dia 3: Engenharia de Dados (em breve)
-│   └── aula-04-ia/               # Dia 4: Inteligência Artificial (em breve)
+│   └── aula-04-claude-code/      # Dia 4: Claude Code & Python
 └── README.md                      # Este arquivo
 ```
 
