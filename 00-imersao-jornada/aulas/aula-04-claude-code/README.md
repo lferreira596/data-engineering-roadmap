@@ -194,6 +194,49 @@ O ticket medio esta errado, deve ser receita / vendas.
 
 Iterar e parte do processo. O PRD e o ponto de partida, nao o resultado final.
 
+### Passo 5.1: Usar Skills para melhorar o visual
+
+O Claude Code tem um sistema de **Skills** — instrucoes especializadas que voce pode instalar para mudar o comportamento dele em tarefas especificas.
+
+Para dashboards e interfaces, existe a skill **frontend-design** que faz o Claude Code gerar interfaces com design profissional em vez do visual padrao generico.
+
+**Como instalar a skill:**
+
+1. Baixe o arquivo da skill:
+
+```bash
+mkdir -p .claude/skills
+curl -o .claude/skills/frontend-design.md https://raw.githubusercontent.com/anthropics/skills/main/skills/frontend-design/SKILL.md
+```
+
+2. Pronto. O Claude Code le automaticamente os arquivos em `.claude/skills/` e aplica as instrucoes.
+
+**O que a skill frontend-design muda:**
+
+| Aspecto | Sem a skill | Com a skill |
+| ------- | ----------- | ----------- |
+| Tipografia | Fontes padrao (Arial, Inter) | Fontes distintivas com pareamento display + body |
+| Cores | Cinza generico | Paleta coesa com CSS variables e acentos fortes |
+| Layout | Colunas basicas | Composicao com assimetria e hierarquia visual |
+| Motion | Estatico | Animacoes em momentos de impacto |
+| Resultado | "Parece um template" | "Parece que um designer fez" |
+
+**Exemplo pratico no dashboard:**
+
+Depois de instalar a skill, peca:
+
+```
+Refatore o visual do dashboard com um design profissional.
+Use uma paleta de cores corporativa, tipografia moderna
+e cards com sombra para os KPIs.
+```
+
+A skill faz o Claude Code pensar em design antes de codar — ele vai considerar proposito, tom e diferenciacao visual em vez de aplicar o visual padrao do Streamlit.
+
+**Mais skills disponiveis:**
+
+O repositorio oficial de skills fica em `github.com/anthropics/skills`. Voce pode explorar e instalar outras skills conforme a necessidade do projeto.
+
 ### Passo 6: Testar o dashboard
 
 ```bash
