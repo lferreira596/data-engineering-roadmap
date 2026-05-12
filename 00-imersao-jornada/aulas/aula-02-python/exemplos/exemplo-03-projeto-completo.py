@@ -10,18 +10,28 @@ NESTE EXEMPLO VOCÊ APRENDE:
 - Pipeline completo: DataLake → PostgreSQL (sem processamento)
 - Salvar exatamente o que vem do Parquet
 - Por que Python é essencial para engenharia de dados
+
+ESTRUTURA DIDÁTICA:
+- PARTE 1.A: Ler UM Parquet do DataLake (io + boto3 + pandas)
+- PARTE 1.B: Salvar essa tabela no PostgreSQL (sqlalchemy)
+- PARTE 2:   Refatorar tudo com FOR para as 4 tabelas
 """
 
+# ============================================
+# ============================================
+# PARTE 1.A: Ler UM Parquet do DataLake
+# ============================================
+# ============================================
+# Aqui só precisamos de 3 libs:
+# - io     → para tratar os bytes que vêm do S3
+# - boto3  → para conversar com o DataLake (S3)
+# - pandas → para transformar o Parquet em DataFrame
+
 import io
-import pandas as pd
 import boto3
-from sqlalchemy import create_engine
+import pandas as pd
 
-# ============================================
-# PASSO 1: Conectar com DataLake e Ler Parquet
-# ============================================
-
-# Instalar: pip install boto3 pandas pyarrow sqlalchemy psycopg2-binary
+# Instalar: pip install boto3 pandas pyarrow
 # Configurações do DataLake (mesmas do exemplo-01 e exemplo-02)
 S3_ENDPOINT_URL = "https://XXXX.storage.supabase.co/storage/v1/s3"
 AWS_REGION = "us-west-2"
@@ -38,13 +48,78 @@ s3 = boto3.client(
     aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
 )
 
-# Listar arquivos no bucket
+# --- Teste de conexão: listar arquivos no bucket ---
+# Antes de processar tabela por tabela, vamos confirmar que a conexão
+# com o DataLake está funcionando listando todos os arquivos disponíveis.
 response = s3.list_objects(Bucket=BUCKET_NAME)
 arquivos = [obj["Key"] for obj in response["Contents"]]
+print("📂 Arquivos encontrados no DataLake:")
+print(arquivos)
+
+# --- Baixar o arquivo Parquet de UMA tabela (produtos) ---
+print("\n📥 Baixando produtos.parquet do DataLake...")
+
+file_key = "produtos.parquet"
+response = s3.get_object(Bucket=BUCKET_NAME, Key=file_key)
+parquet_bytes = response["Body"].read()
+
+# --- Converter bytes → DataFrame ---
+df_produtos = pd.read_parquet(io.BytesIO(parquet_bytes))
+print(f"✅ produtos: {len(df_produtos)} linhas carregadas")
+
 
 # ============================================
-# PASSO 2: Ler as 4 tabelas do DataLake (Parquet)
 # ============================================
+# PARTE 1.B: Salvar essa tabela no PostgreSQL
+# ============================================
+# ============================================
+# Agora que já temos o DataFrame em memória, falta enviar pro banco.
+# Para isso usamos:
+# - sqlalchemy → para criar a "engine" de conexão com o PostgreSQL
+# (o pandas já sabe usar essa engine no .to_sql())
+
+from sqlalchemy import create_engine
+
+# Instalar: pip install sqlalchemy psycopg2-binary
+# Configurações do PostgreSQL (Supabase)
+DATABASE_URL = "postgresql+psycopg2://xxxx"
+
+# Criar engine de conexão com o PostgreSQL
+engine = create_engine(DATABASE_URL)
+
+# --- Salvar produtos no PostgreSQL ---
+print("\n💾 Salvando produtos no PostgreSQL...")
+
+df_produtos.to_sql(
+    "produtos",            # Nome da tabela no banco
+    engine,                # Engine de conexão
+    if_exists="replace",   # Substituir se existir
+    index=False,           # Não salvar índice do pandas
+)
+print(f"✅ produtos: {len(df_produtos)} linhas salvas no banco")
+
+# --- Verificar se os dados foram salvos ---
+df_verificacao = pd.read_sql_query("SELECT COUNT(*) as total FROM produtos", engine)
+total = df_verificacao["total"].iloc[0]
+print(f"📊 Verificação: produtos tem {total} linhas no banco")
+
+# 🤔 PROBLEMA: e se tivéssemos 4, 10 ou 100 tabelas?
+# Copiar e colar esse bloco várias vezes é repetitivo e fácil de errar.
+# É aqui que o FOR entra: ele repete o mesmo bloco para cada tabela.
+
+
+# ============================================
+# ============================================
+# PARTE 2: Refatorando com FOR para 4 tabelas
+# ============================================
+# ============================================
+# Agora que você entendeu o pipeline com UMA tabela,
+# vamos usar FOR para processar AS QUATRO tabelas
+# com o MESMO código que escrevemos acima.
+
+print("\n" + "=" * 50)
+print("PARTE 2: Pipeline para as 4 tabelas (com FOR)")
+print("=" * 50)
 
 # Lista com os nomes das 4 tabelas que vamos carregar
 TABELAS = ["produtos", "clientes", "vendas", "preco_competidores"]
@@ -53,7 +128,7 @@ TABELAS = ["produtos", "clientes", "vendas", "preco_competidores"]
 # Chave = nome da tabela, Valor = DataFrame com os dados
 dataframes = {}
 
-# FOR 1: Percorrer cada tabela e baixar do DataLake
+# --- FOR 1: Baixar cada tabela do DataLake ---
 # Na 1ª volta: tabela = "produtos"
 # Na 2ª volta: tabela = "clientes"
 # Na 3ª volta: tabela = "vendas"
@@ -64,7 +139,7 @@ for tabela in TABELAS:
     # Montar o nome do arquivo: "produtos" → "produtos.parquet"
     file_key = f"{tabela}.parquet"
 
-    # Baixar o arquivo do S3
+    # Baixar o arquivo do S3 (mesmo código da PARTE 1.A, mas com variável)
     response = s3.get_object(Bucket=BUCKET_NAME, Key=file_key)
     parquet_bytes = response["Body"].read()
 
@@ -80,18 +155,7 @@ for tabela in TABELAS:
 #   "preco_competidores": DataFrame com dados de preços
 # }
 
-# ============================================
-# PASSO 3: Salvar no PostgreSQL (sem processamento)
-# ============================================
-
-# Instalar: pip install sqlalchemy psycopg2-binary
-# Configurações do PostgreSQL (Supabase)
-DATABASE_URL = "postgresql+psycopg2://xxxx"
-
-# Criar engine de conexão
-engine = create_engine(DATABASE_URL)
-
-# FOR 2: Percorrer o dicionário e salvar cada tabela no banco
+# --- FOR 2: Salvar cada tabela no PostgreSQL ---
 # .items() retorna pares (chave, valor) → (nome_tabela, dataframe)
 # Na 1ª volta: tabela = "produtos", df = DataFrame de produtos
 # Na 2ª volta: tabela = "clientes", df = DataFrame de clientes
@@ -101,16 +165,16 @@ for tabela, df in dataframes.items():
     print(f"💾 Salvando {tabela} no PostgreSQL...")
 
     df.to_sql(
-        tabela,  # Nome da tabela no banco
-        engine,  # Engine de conexão
-        if_exists="replace",  # Substituir se existir
-        index=False  # Não salvar índice do pandas
+        tabela,                # Nome da tabela no banco
+        engine,                # Engine de conexão
+        if_exists="replace",   # Substituir se existir
+        index=False,           # Não salvar índice do pandas
     )
 
     print(f"✅ {tabela}: {len(df)} linhas salvas no banco")
 
-# FOR 3: Verificar se os dados foram salvos corretamente
-# Agora lemos DO BANCO para confirmar que tudo chegou
+# --- FOR 3: Verificar se os dados foram salvos corretamente ---
+# Agora lemos DO BANCO para confirmar que tudo chegou.
 # NOTA: usamos f-string para montar o SQL porque `tabela` vem de uma
 # constante interna (TABELAS). Em produção, NUNCA interpole input de
 # usuário direto no SQL — isso abre brecha de SQL injection. Para input
@@ -127,10 +191,24 @@ engine.dispose()
 # ============================================
 # RESUMO: Pipeline Completo
 # ============================================
-# 1. ✅ Conectou com DataLake (boto3)
-# 2. ✅ Baixou 4 arquivos Parquet (produtos, clientes, vendas, preco_competidores)
-# 3. ✅ Converteu para DataFrames (pandas)
-# 4. ✅ Salvou no PostgreSQL (sem processamento)
+# PARTE 1.A — Ler 1 Parquet (io + boto3 + pandas):
+#   1. ✅ Listou arquivos no DataLake
+#   2. ✅ Baixou produtos.parquet
+#   3. ✅ Converteu para DataFrame
+#
+# PARTE 1.B — Salvar essa tabela (sqlalchemy):
+#   1. ✅ Criou engine de conexão com Postgres
+#   2. ✅ Salvou produtos no banco
+#   3. ✅ Conferiu o COUNT no banco
+#
+# PARTE 2 — Mesmo pipeline para 4 tabelas (com FOR):
+#   1. ✅ FOR 1: baixou produtos, clientes, vendas, preco_competidores
+#   2. ✅ FOR 2: salvou todas no PostgreSQL
+#   3. ✅ FOR 3: verificou no banco
+#
+# 💡 LIÇÃO: o FOR não muda a lógica, só REPETE o mesmo bloco
+# para cada item da lista. Escreva primeiro para 1 caso,
+# depois transforme em loop quando precisar repetir.
 #
 # Este é o fluxo completo de ingestão de dados:
 # EXTRACTION → LOADING (EL)
