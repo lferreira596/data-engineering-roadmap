@@ -35,6 +35,17 @@ tenis_nike = {
     "quantidade": 10
 }
 
+# Acessar valor de um dicionário pela chave: dicionario["chave"]
+# É ASSIM que vamos pegar dados depois! Ex: response["Body"] no S3
+print(tenis_nike["nome"])      # "Tênis Nike Air Max"
+print(tenis_nike["preco"])     # 599.90
+print(tenis_nike["quantidade"])  # 10
+
+# Percorrer chave e valor ao mesmo tempo com .items()
+# Vamos usar isso no exemplo-03 para salvar várias tabelas no banco!
+for chave, valor in tenis_nike.items():
+    print(f"{chave}: {valor}")
+
 # Lista de dicionários - Estrutura mais comum para dados tabulares!
 lista_tenis = [
     {"nome": "Tênis Nike Air Max", "marca": "Nike", "preco": 599.90},
@@ -43,6 +54,10 @@ lista_tenis = [
     {"nome": "Tênis Vans Old Skool", "marca": "Vans", "preco": 399.90},
     {"nome": "Tênis Converse Chuck", "marca": "Converse", "preco": 349.90}
 ]
+
+# len() - Quantos itens tem a lista?
+# Vamos usar muito isso depois: len(df) = quantas linhas tem o DataFrame
+print(f"Total de tênis: {len(lista_tenis)}")  # 5
 
 # For loop - Percorrer uma lista
 # É assim que iteramos sobre dados no Python!

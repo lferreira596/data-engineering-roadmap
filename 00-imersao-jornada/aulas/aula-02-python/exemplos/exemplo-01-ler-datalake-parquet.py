@@ -6,8 +6,10 @@ Conceito: Conectar com DataLake usando boto3 e ler arquivos Parquet
 Pergunta: Como ler dados de um DataLake usando a API S3?
 """
 
-# Instalar boto3: pip install boto3
+# Instalar: pip install boto3 pandas pyarrow
+import io  # Trabalha com dados "em memória" (bytes que viram "arquivo")
 import boto3
+import pandas as pd
 
 # Configurações do DataLake
 S3_ENDPOINT_URL = "https://XXXX.storage.supabase.co/storage/v1/s3"
@@ -26,96 +28,107 @@ s3 = boto3.client(
 )
 
 # Listar arquivos no bucket
+# response é um dicionário; response["Contents"] é uma lista de dicionários
+# Cada item tem chaves como "Key" (nome do arquivo), "Size", "LastModified"...
 response = s3.list_objects(Bucket=BUCKET_NAME)
-arquivos = [obj["Key"] for obj in response["Contents"]]
 
-# Instalar pandas: pip install pandas pyarrow
-import pandas as pd
-# Trabalha com dados "em memória" transforma um bytes
-import io
+# Forma 1 (didática): for tradicional
+arquivos = []
+for obj in response["Contents"]:
+    arquivos.append(obj["Key"])
+
+# Forma 2 (mais curta - "list comprehension"): mesmo resultado em uma linha
+# arquivos = [obj["Key"] for obj in response["Contents"]]
+
+print(f"Arquivos no bucket: {arquivos}")
 
 # Baixar arquivo Parquet
 FILE_KEY = "vendas.parquet"
 response = s3.get_object(Bucket=BUCKET_NAME, Key=FILE_KEY)
-parquet_bytes = response["Body"].read()
+parquet_bytes = response["Body"].read()  # bytes brutos do arquivo
 
 # Converter Parquet para DataFrame
+# pandas espera um "arquivo"; como temos só bytes na memória,
+# io.BytesIO finge ser um arquivo pra ele conseguir ler.
 df_vendas = pd.read_parquet(io.BytesIO(parquet_bytes))
 
 # ============================================
 # EXPLORANDO DADOS COM PANDAS
 # ============================================
+# IMPORTANTE: em script .py, df.head() sozinho NÃO exibe nada.
+# Precisamos de print() para ver o resultado no terminal.
+# (Em notebook/Jupyter o print é automático)
 
 # Visualizar primeiras linhas
-df_vendas.head()
+print(df_vendas.head())
 
 # Visualizar últimas linhas
-df_vendas.tail()
+print(df_vendas.tail())
 
 # Informações do DataFrame (tipos, memória, etc)
-df_vendas.info()
+df_vendas.info()  # info() já imprime sozinho
 
 # Estatísticas descritivas (média, mediana, desvio padrão, etc)
-df_vendas.describe()
+print(df_vendas.describe())
 
 # Estatísticas de uma coluna específica
-df_vendas["preco_unitario"].describe()
+print(df_vendas["preco_unitario"].describe())
 
 # Contar valores únicos
-df_vendas["id_produto"].value_counts()
+print(df_vendas["id_produto"].value_counts())
 
 # Contar valores únicos com percentual
-df_vendas["id_produto"].value_counts(normalize=True)
+print(df_vendas["id_produto"].value_counts(normalize=True))
 
 # Agrupar e agregar dados
 # Exemplo: Preço médio por produto
-df_vendas.groupby("id_produto")["preco_unitario"].mean()
+print(df_vendas.groupby("id_produto")["preco_unitario"].mean())
 
 # Múltiplas agregações
-df_vendas.groupby("id_produto")["preco_unitario"].agg(["mean", "min", "max", "count"])
+print(df_vendas.groupby("id_produto")["preco_unitario"].agg(["mean", "min", "max", "count"]))
 
 # Agrupar por múltiplas colunas
-df_vendas.groupby(["id_produto", "id_cliente"])["quantidade"].sum()
+print(df_vendas.groupby(["id_produto", "id_cliente"])["quantidade"].sum())
 
 # Filtrar dados
 # Vendas com preço maior que 100
-df_vendas[df_vendas["preco_unitario"] > 100]
+print(df_vendas[df_vendas["preco_unitario"] > 100])
 
 # Filtrar por múltiplas condições
-df_vendas[(df_vendas["preco_unitario"] > 100) & (df_vendas["quantidade"] > 1)]
+print(df_vendas[(df_vendas["preco_unitario"] > 100) & (df_vendas["quantidade"] > 1)])
 
 # Ordenar dados
-df_vendas.sort_values("preco_unitario", ascending=False)
+print(df_vendas.sort_values("preco_unitario", ascending=False))
 
 # Ordenar por múltiplas colunas
-df_vendas.sort_values(["id_produto", "preco_unitario"], ascending=[True, False])
+print(df_vendas.sort_values(["id_produto", "preco_unitario"], ascending=[True, False]))
 
 # Selecionar colunas específicas
-df_vendas[["id_produto", "quantidade", "preco_unitario"]]
+print(df_vendas[["id_produto", "quantidade", "preco_unitario"]])
 
 # Criar nova coluna calculada
 df_vendas["receita"] = df_vendas["quantidade"] * df_vendas["preco_unitario"]
 
 # Contar linhas e colunas
-len(df_vendas)  # Número de linhas
-df_vendas.shape  # (linhas, colunas)
+print(len(df_vendas))   # Número de linhas
+print(df_vendas.shape)  # (linhas, colunas)
 
 # Verificar valores únicos
-df_vendas["id_produto"].unique()
-df_vendas["id_produto"].nunique()  # Quantidade de valores únicos
+print(df_vendas["id_produto"].unique())
+print(df_vendas["id_produto"].nunique())  # Quantidade de valores únicos
 
 # Verificar valores faltantes
-df_vendas.isnull().sum()
+print(df_vendas.isnull().sum())
 
 # Verificar duplicatas
-df_vendas.duplicated().sum()
+print(df_vendas.duplicated().sum())
 
 # Top N valores
-df_vendas.nlargest(10, "preco_unitario")  # Top 10 preços mais altos
-df_vendas.nsmallest(10, "preco_unitario")  # Top 10 preços mais baixos
+print(df_vendas.nlargest(10, "preco_unitario"))   # Top 10 preços mais altos
+print(df_vendas.nsmallest(10, "preco_unitario"))  # Top 10 preços mais baixos
 
 # Converter data_venda para datetime (se necessário)
 df_vendas["data_venda"] = pd.to_datetime(df_vendas["data_venda"])
 
 # Agrupar por data e calcular média
-df_vendas.groupby(df_vendas["data_venda"].dt.date)["preco_unitario"].mean()
+print(df_vendas.groupby(df_vendas["data_venda"].dt.date)["preco_unitario"].mean())

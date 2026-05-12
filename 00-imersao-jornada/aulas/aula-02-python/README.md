@@ -311,6 +311,42 @@ A aula está organizada em **4 exemplos práticos** que cobrem todo o fluxo de i
 ### 🔥 Exemplo 00: Aquecimento Python
 
 #### `exemplo-00-aquecimento-fundamentos.py`
+**Conceito:** Fundamentos de Python para trabalhar com dados  
+**Pergunta de Negócio:** Por que preciso saber Python básico para trabalhar com dados?  
+
+**O que você aprende:**
+- Como usar `print()` e f-strings para exibir informações
+- Como criar variáveis (`str`, `int`, `float`)
+- Como criar listas (`[]`) e iterar com `for`
+- Como criar dicionários (`{}`) — estrutura essencial para dados tabulares
+- **Como acessar valores de um dicionário pela chave** (`dict["chave"]`) — base para entender `response["Body"]` no exemplo-01
+- Como criar listas de dicionários (estrutura mais comum em dados reais)
+
+**Conceitos Python:**
+- `print()`: exibir informações no terminal
+- f-string (`f"..."`): formatar texto com variáveis
+- Variáveis: `str` (texto), `int` (inteiro), `float` (decimal)
+- Lista (`[]`): coleção ordenada de itens
+- Dicionário (`{}`): pares chave-valor
+- Acesso por chave: `dicionario["chave"]` retorna o valor
+- `for item in lista`: iterar sobre uma coleção
+
+**Por que isso é importante?**
+- Dados JSON (retornados por APIs) viram dicionários em Python
+- `response["Body"]`, `response["Contents"]`, `obj["Key"]` — tudo é acesso a dicionário
+- Pandas usa esses conceitos por baixo dos panos
+- Lista de dicionários é a estrutura natural de dados tabulares
+
+**Resultado Esperado:**
+- Compreensão dos fundamentos de Python
+- Capacidade de criar e acessar listas e dicionários
+- Base sólida para entender o restante da aula
+
+---
+
+### 💾 Exemplo 01: Conectar com DataLake
+
+#### `exemplo-01-ler-datalake-parquet.py`
 **Conceito:** Conectar com DataLake (S3/Supabase Storage) e ler Parquet  
 **Pergunta de Negócio:** Como ler dados de um Data Lake usando a API S3?  
 
@@ -328,7 +364,7 @@ A aula está organizada em **4 exemplos práticos** que cobrem todo o fluxo de i
 - `import boto3`: biblioteca para trabalhar com S3
 - `boto3.client()`: cria cliente S3 (compatível com Supabase Storage)
 - `s3.list_objects()`: lista arquivos no bucket
-- `s3.get_object()`: baixa arquivo do Data Lake
+- `s3.get_object()`: baixa arquivo do Data Lake — retorna um **dicionário**, e o conteúdo está em `response["Body"]` (lembra do `tenis_nike["nome"]` do exemplo-00?)
 - `pd.read_parquet(io.BytesIO())`: lê Parquet da memória
 - Métodos Pandas: `head()`, `info()`, `describe()`, `value_counts()`, `groupby()`, `nlargest()`, etc.
 
@@ -465,8 +501,11 @@ Após fazer todos os exemplos, você deve ser capaz de:
 
 ### 🔥 Exemplo 00: Aquecimento Python
 - [ ] Usar print e f-strings
-- [ ] Trabalhar com variáveis (str, int)
+- [ ] Trabalhar com variáveis (str, int, float)
 - [ ] Usar listas e dicionários
+- [ ] Acessar valores de dicionário pela chave (`dict["chave"]`)
+- [ ] Iterar dicionário com `.items()` (chave, valor)
+- [ ] Usar `len()` para contar itens
 - [ ] Entender por que dicionários são essenciais para dados estruturados
 - [ ] Trabalhar com lista de dicionários
 
@@ -504,23 +543,27 @@ Após fazer todos os exemplos, você deve ser capaz de:
 
 ## 🐛 Troubleshooting
 
-### Erro: "ModuleNotFoundError: No module named 'pandas'"
+### Erro: "ModuleNotFoundError: No module named 'pandas'" (ou boto3, sqlalchemy, pyarrow)
 ```bash
-pip install pandas
+pip install -r requirements.txt
 ```
 
-### Erro: "FileNotFoundError: vendas.csv"
-- Verifique se os arquivos CSV estão na pasta `data/`
-- Verifique o caminho relativo no script
+### Erro: `NoSuchKey` ou `NoSuchBucket` no boto3
+- Verifique `BUCKET_NAME` e `FILE_KEY` (nome exato, com extensão)
+- Confirme que o arquivo existe no bucket — pode listar com `s3.list_objects(Bucket=BUCKET_NAME)`
 
-### Erro: "ConnectionError" ao baixar arquivos externos
-- Verifique sua conexão com internet
-- Verifique se a URL do arquivo está correta e acessível
-- Alguns repositórios podem ter rate limiting - adicione delays entre requisições
+### Erro: `InvalidAccessKeyId` ou `SignatureDoesNotMatch`
+- `aws_access_key_id` e `aws_secret_access_key` precisam ser **valores diferentes**
+- No Supabase Storage, copie key e secret na tela de credenciais S3
 
-### Erro: "sqlite3.OperationalError: no such table"
-- Execute primeiro o exemplo que cria o banco
-- Verifique se o banco foi criado corretamente
+### Erro: `psycopg2.OperationalError` ao conectar no PostgreSQL
+- A URL precisa começar com `postgresql+psycopg2://` (não só `postgresql://`)
+- Verifique host, porta, usuário, senha e nome do banco
+- Confirme que sua máquina consegue alcançar o banco (firewall, IP allowlist)
+
+### `df.head()` não exibe nada quando rodo `python arquivo.py`
+- Em script `.py`, o pandas precisa de `print(df.head())` para exibir
+- Em notebook/Jupyter o display é automático — em script, não
 
 ---
 

@@ -21,13 +21,13 @@ from sqlalchemy import create_engine
 # PASSO 1: Conectar com DataLake e Ler Parquet
 # ============================================
 
-# Instalar boto3: pip install boto3
-# Configurações do DataLake
-S3_ENDPOINT_URL = "xxxxx"
+# Instalar: pip install boto3 pandas pyarrow sqlalchemy psycopg2-binary
+# Configurações do DataLake (mesmas do exemplo-01 e exemplo-02)
+S3_ENDPOINT_URL = "https://XXXX.storage.supabase.co/storage/v1/s3"
 AWS_REGION = "us-west-2"
-AWS_ACCESS_KEY_ID = "xxxxxf"
-AWS_SECRET_ACCESS_KEY = "xxxx"
-BUCKET_NAME = "meu_bucket"
+AWS_ACCESS_KEY_ID = "XXXX"
+AWS_SECRET_ACCESS_KEY = "XXXXX"
+BUCKET_NAME = "XXXX"
 
 # Criar cliente S3
 s3 = boto3.client(
@@ -111,6 +111,10 @@ for tabela, df in dataframes.items():
 
 # FOR 3: Verificar se os dados foram salvos corretamente
 # Agora lemos DO BANCO para confirmar que tudo chegou
+# NOTA: usamos f-string para montar o SQL porque `tabela` vem de uma
+# constante interna (TABELAS). Em produção, NUNCA interpole input de
+# usuário direto no SQL — isso abre brecha de SQL injection. Para input
+# externo, use parâmetros (ex: pd.read_sql_query(sql, engine, params=...)).
 print("\n📊 Verificação final:")
 for tabela in TABELAS:
     df_verificacao = pd.read_sql_query(f"SELECT COUNT(*) as total FROM {tabela}", engine)
