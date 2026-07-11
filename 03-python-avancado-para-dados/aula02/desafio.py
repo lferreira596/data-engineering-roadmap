@@ -2,7 +2,16 @@
 
 # 1) Solicita ao usuário que digite seu nome
 
-nome = input("Digite seu nome: ")
+while True:
+    nome = input("Digite seu nome: ")
+    if nome.isspace():
+            print("Erro: O nome não pode conter apenas espaços. Por favor, digite um nome válido.")
+    elif nome.isnumeric():
+            print("Erro: O nome não pode ser numérico. Por favor, digite um nome válido.")
+    elif nome == "":
+            print("Erro: O nome não pode ser vazio. Por favor, digite um nome válido.")
+    else:
+            break
 print(f"Olá, {nome}! Bem-vindo ao programa de cálculo de bônus.")
 
 # 2) Solicita ao usuário que digite o valor do seu salário
